@@ -5,17 +5,25 @@
 @Author  : liuhuangshan
 @File    : utils.py
 """
+import json
 import time
+import requests
+import redis
 from typing import List, Dict, Union
 
-import requests
 from itsdangerous import TimedSerializer, TimestampSigner
 
 from models import SlurmJob, SlurmNode, SlurmPartition
 
+REDIS_HOST = 'localhost'
+REDIS_PORT = 6379
+
 sec_key = "w183$sjOv&"
 serializer = TimedSerializer(sec_key)
 signer = TimestampSigner(sec_key)
+redis_cli = redis.Redis(host=REDIS_HOST, port=REDIS_PORT, decode_responses=True)
+
+
 def dumps_data():
     """将data用sec_key 加密"""
     data = {'a': 111, 'b': [222, 333]}
@@ -48,7 +56,8 @@ def generate_token(value: str):
 def verify_token(token) -> bool:
     """验证token有效性"""
     try:
-
+        if isinstance(token, str):
+            token = bytes(token, 'utf-8')
         assert isinstance(token, bytes)
         r = signer.unsign(token, 60)
         print(r)
@@ -76,7 +85,11 @@ def get_slurm_partition() -> List[SlurmPartition]:
 def do_upload_data(data: dict):
     assert isinstance(data, dict), 'wrong format!'
     for k in data:
-        pass
+        json_str = json.dumps(data[k])
+        redis_cli.set(k, json_str, ex=600)
+    for k in data:
+        print(k, json.loads(redis_cli.get(k)))
+        print('=' * 30)
 
 
 def test():

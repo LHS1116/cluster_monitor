@@ -108,14 +108,17 @@ def get_alerts_by_user(user_name: str):
     pass
 
 
-@data_view.route('/upload', menthods=['POST'])
+@data_view.route('/upload', methods=['POST'])
 def upload_data():
     try:
         token = request.headers.get('Token')
-
-        data = request.form or request.json
-        do_upload_data(data)
+        if verify_token(token):
+            data = request.form or request.json
+            do_upload_data(data)
+            return 'success', 200
+        else:
+            return 'invalid token!', 403
     except Exception as e:
         print(e)
         traceback.print_tb(sys.exc_info()[2])
-        return str(e)
+        return str(e), 200
