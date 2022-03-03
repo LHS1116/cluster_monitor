@@ -72,8 +72,10 @@ def get_slurm_diag():
 
 
 def get_slurm_nodes(node_id: int = None, node_name: str = None) -> List[SlurmNode]:
-
-    pass
+    nodes = redis_cli.get('nodes')
+    if not nodes:
+        return []
+    return json.loads(nodes)
 
 
 def get_slurm_jobs(job_id: int = None, job_name: str = None) -> List[SlurmJob]:
@@ -86,7 +88,7 @@ def do_upload_data(data: dict):
     assert isinstance(data, dict), 'wrong format!'
     for k in data:
         json_str = json.dumps(data[k])
-        redis_cli.set(k, json_str, ex=600)
+        redis_cli.set(k, json_str, ex=3600 *48)
     for k in data:
         print(k, json.loads(redis_cli.get(k)))
         print('=' * 30)
@@ -104,3 +106,8 @@ def test():
     print(resp.content)
 # print(type(dumps_data()))
 
+def test_redis():
+    data = redis_cli.get('nodes')
+    print(data)
+
+test_redis()
