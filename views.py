@@ -56,6 +56,13 @@ def get_user_by_id(user_id):
     pass
 
 
+@node_view.route('/nodes')
+def get_nodes():
+    """获取节点信息"""
+    nodes = get_slurm_nodes()
+    return nodes, 200
+
+
 @resource_view.route('/total')
 def get_cluster_resource_info():
     """获取集群资源信息"""
@@ -83,8 +90,47 @@ def get_node_resource_info(node_name: str):
 @alert_view.route('/create', methods=['POST', 'GET'])
 def create_alert_info():
     """alert_manager发送告警信息"""
+
+    example = {
+        'receiver': 'email_and_webhook',
+        'status': 'firing',
+        'alerts': [
+            {
+                'status': 'firing',
+                'labels': {
+                    'alertname': 'clusterNodeStatesAlert',
+                    'instance': 'localhost:8080',
+                    'job': 'slurm_exporter',
+                    'severity': 'page',
+                    'user': 'root'
+                },
+                'annotations': {
+                    'description': '实例localhost:8080 缺少可用节点  (当前值为: 0)',
+                    'summary': '集群无可用节点报警 localhost:8080'
+                },
+                'startsAt': '2022-03-03T11:58:24.943Z',
+                'endsAt': '0001-01-01T00:00:00Z',
+                'generatorURL': 'http://lhs-01:9090/graph?g0.expr=slurm_nodes_idle+%3D%3D+0&g0.tab=1',
+                'fingerprint': '66c453b94b4abf47'
+            }
+        ],
+        'groupLabels': {'alertname': 'clusterNodeStatesAlert'},
+        'commonLabels': {
+            'alertname': 'clusterNodeStatesAlert',
+            'instance': 'localhost:8080',
+            'job': 'slurm_exporter',
+            'severity': 'page',
+            'user': 'root'
+        },
+        'commonAnnotations': {'description': '实例localhost:8080 缺少可用节点  (当前值为: 0)',
+                              'summary': '集群无可用节点报警 localhost:8080'},
+        'externalURL': 'http://lhs-01:90',
+        'groupKey': '{}:{alertname="clusterNodeStatesAlert"}',
+        'truncatedAlerts': 0}
+
     try:
         register_dict = request.form or request.json
+        # TODO: 做出操作
         # request.headers
         print(register_dict)
 
