@@ -6,6 +6,8 @@
 @File    : views.py
 """
 import os
+import sys
+import traceback
 
 from flask import Blueprint, render_template, abort, Response, Request, jsonify, request
 from utils import *
@@ -15,6 +17,7 @@ node_view = Blueprint('node_view', __name__, url_prefix='/node')
 user_view = Blueprint('user_view', __name__, url_prefix='/user')
 resource_view = Blueprint('resource_view', __name__, url_prefix='/resource')
 alert_view = Blueprint('alert_view', __name__, url_prefix='/alert')
+data_view = Blueprint('data_view', __name__, url_prefix='/data')
 
 
 @job_view.route('/jobs')
@@ -77,12 +80,19 @@ def get_node_resource_info(node_name: str):
     pass
 
 
-@alert_view.route('/create', methods=['POST'])
+@alert_view.route('/create', methods=['POST', 'GET'])
 def create_alert_info():
     """alert_manager发送告警信息"""
-    register_dict = request.form
-    print(register_dict)
+    try:
+        register_dict = request.form or request.json
+        # request.headers
+        print(register_dict)
 
+        return jsonify(register_dict)
+    except Exception as e:
+        print(e)
+        traceback.print_tb(sys.exc_info()[2])
+        return str(e)
     pass
 
 
@@ -96,3 +106,16 @@ def get_alerts():
 def get_alerts_by_user(user_name: str):
     """获取用户历史告警记录"""
     pass
+
+
+@data_view.route('/upload', menthods=['POST'])
+def upload_data():
+    try:
+        token = request.headers.get('Token')
+
+        data = request.form or request.json
+        do_upload_data(data)
+    except Exception as e:
+        print(e)
+        traceback.print_tb(sys.exc_info()[2])
+        return str(e)

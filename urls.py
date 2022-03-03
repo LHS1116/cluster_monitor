@@ -13,7 +13,8 @@ app.register_blueprint(job_view)
 app.register_blueprint(node_view)
 app.register_blueprint(user_view)
 app.register_blueprint(resource_view)
-
+app.register_blueprint(alert_view)
+app.register_blueprint(data_view)
 
 @app.route('/hello')
 def hello_world():
