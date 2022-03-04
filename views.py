@@ -130,7 +130,9 @@ def create_alert_info():
 
     try:
         register_dict = request.form or request.json
-        # TODO: 做出操作
+        # TODO: 做出操作（根据告警内容发送自定义邮件等）
+        # 对于之前的需求可以根据指标自定义实现
+
         # request.headers
         print(register_dict)
 
@@ -168,3 +170,8 @@ def upload_data():
         print(e)
         traceback.print_tb(sys.exc_info()[2])
         return str(e), 200
+
+@job_view.route('/test')
+def test():
+    data = test_redis()
+    return data

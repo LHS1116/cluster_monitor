@@ -9,6 +9,8 @@ import json
 import time
 import requests
 import redis
+import smtplib
+
 from typing import List, Dict, Union
 
 from itsdangerous import TimedSerializer, TimestampSigner
@@ -23,6 +25,22 @@ serializer = TimedSerializer(sec_key)
 signer = TimestampSigner(sec_key)
 redis_cli = redis.Redis(host=REDIS_HOST, port=REDIS_PORT, decode_responses=True)
 
+smtp_host = 'xxx'
+smtp_port = 578
+smtp_user = 'xxx'
+smtp_token = 'xxx'
+smtp_sender_mail = ''
+
+
+def send_email(email_addr, html=None, msg=None):
+    try:
+        smtpObj = smtplib.SMTP()
+        smtpObj.connect(smtp_host, smtp_port)
+        smtpObj.login(smtp_user, smtp_token)
+        smtpObj.sendmail(from_addr=smtp_sender_mail, to_addrs=email_addr, msg=msg or '')
+    except Exception as e:
+        print(e)
+        raise e
 
 def dumps_data():
     """将data用sec_key 加密"""
@@ -88,7 +106,7 @@ def do_upload_data(data: dict):
     assert isinstance(data, dict), 'wrong format!'
     for k in data:
         json_str = json.dumps(data[k])
-        redis_cli.set(k, json_str, ex=3600 *48)
+        redis_cli.set(k, json_str, ex=3600 * 48)
     for k in data:
         print(k, json.loads(redis_cli.get(k)))
         print('=' * 30)
@@ -107,7 +125,18 @@ def test():
 # print(type(dumps_data()))
 
 def test_redis():
-    data = redis_cli.get('nodes')
+    data = {
+        'current_user': 'current_user',
+        'jobs': 'sacct_info',
+        'nodes': 'nodes',
+        'gpu_stat': 'gpu_stat',
+        'node_gpu': 'node_gpus'
+    }
+    for i in data:
+        data[i] = json.loads(redis_cli.get(i))
+        # data[i] = redis_cli.get(i)
+    data['keys'] = redis_cli.keys()
     print(data)
+    return data
 
 test_redis()
