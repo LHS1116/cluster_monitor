@@ -12,6 +12,8 @@ import threading
 import time
 import requests
 import redis
+import smtplib
+
 from typing import List, Dict, Union
 
 from itsdangerous import TimedSerializer, TimestampSigner
@@ -26,6 +28,22 @@ serializer = TimedSerializer(sec_key)
 signer = TimestampSigner(sec_key)
 redis_cli = redis.Redis(host=REDIS_HOST, port=REDIS_PORT, decode_responses=True)
 
+smtp_host = 'xxx'
+smtp_port = 578
+smtp_user = 'xxx'
+smtp_token = 'xxx'
+smtp_sender_mail = ''
+
+
+def send_email(email_addr, html=None, msg=None):
+    try:
+        smtpObj = smtplib.SMTP()
+        smtpObj.connect(smtp_host, smtp_port)
+        smtpObj.login(smtp_user, smtp_token)
+        smtpObj.sendmail(from_addr=smtp_sender_mail, to_addrs=email_addr, msg=msg or '')
+    except Exception as e:
+        print(e)
+        raise e
 
 def get_response(data: Union[Dict, List], code: int):
     return {
@@ -35,7 +53,7 @@ def get_response(data: Union[Dict, List], code: int):
     }
 
 
-def cal_timedelta(start: datetime, end: datetime) -> str:
+def cal_timedelta(start: datetime.datetime, end: datetime.datetime) -> str:
     if not start or not end:
         return ''
     seconds = int((end - start).total_seconds())
@@ -313,8 +331,6 @@ def test():
     }
     resp = requests.post(url, data=data)
     print(resp.content)
-
-
 # print(type(dumps_data()))
 
 def test_redis():
@@ -579,5 +595,5 @@ def test_redis():
         # print(redis_cli.get(k))
 
 
-get_slurm_jobs()
+# get_slurm_jobs()
 # test_redis()
