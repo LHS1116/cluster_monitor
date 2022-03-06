@@ -2,6 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
+      <module fileurl="file://$USER_HOME$/PycharmProjects/cluster_exporter/.idea/cluster_exporter.iml" filepath="$USER_HOME$/PycharmProjects/cluster_exporter/.idea/cluster_exporter.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/cluster_monitor.iml" filepath="$PROJECT_DIR$/.idea/cluster_monitor.iml" />
     </modules>
   </component>

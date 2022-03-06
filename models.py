@@ -18,6 +18,11 @@ class SlurmResponse(Response):
 
 
 class SlurmEntity:
+    created_timestamp: int
+    def __init__(self):
+        self.created_timestamp = int(datetime.now().timestamp())
+
+
     @classmethod
     def from_dict(cls, values: dict):
         if values is None or len(values) == 0:
@@ -51,13 +56,23 @@ class SlurmNode(SlurmEntity):
 
 class SlurmJob(SlurmEntity):
     job_id: int
+    pid: int
     user: str
-    node_name: str
+    node: str
+    partition: str
     tres: dict
+    gpu_alloc: int
+    gpu_used: int
+    cpu_alloc: int
+    gpu_utilization: float
+    cpu_utilization: float
+    # cpu_used: int
     submit_time: datetime
     start_time: datetime
     end_time: datetime
     qos: str
+    state: str
+    running_time: str
 
 
 class SlurmPartition(SlurmEntity):
@@ -66,5 +81,19 @@ class SlurmPartition(SlurmEntity):
     nodes: list
     state: str
     tres: dict
+    default: int
+    cpu_total: int
+    cpu_alloc: int
+    gpu_total: int = 0
+    gpu_alloc: int = 0
 
+
+class SlurmAlertInfo(SlurmEntity):
+    start_at: str
+    end_at: str
+    alert_name: str
+    title: str
+    description: str
+    user: str
+    node: str
 
