@@ -132,25 +132,29 @@ def get_slurm_nodes(node_id: int = None, node_name: str = None) -> List[SlurmNod
 
 def get_slurm_jobs(return_all: bool = False, return_dict: bool = False) -> List[Dict]:
     """获取作业列表"""
-    jobs = redis_cli.get('jobs')
+    jobs = redis_cli.get('all_jobs')
     if not jobs:
         return []
     jobs = json.loads(jobs)
 
     for job in jobs:
-        key = f'slurm_job_{job["job_id"]}'
-        val = redis_cli.get(key)
-        ave_cpu = job.get('ave_cpu', 0)
-        ave_gpu = job.get('ave_gpu', 0)
+        # key = f'slurm_job_{job["job_id"]}'
+        # val = redis_cli.get(key)
+        # ave_cpu = job.get('ave_cpu', 0)
+        # ave_gpu = job.get('ave_gpu', 0)
+        #
+        # if not val:
+        #     job['cpu_utilization'] = 0
+        #
+        # else:
+        #     val = json.loads(val)
+        #     job['cpu_utilization'] = (ave_cpu - val['ave_cpu']) / UPDATE_DELTA
+        job['cpu_utilization'] = (random.Random().randint(160, 800)) / 1000
+        job['gpu_utilization'] = (random.Random().randint(160, 800)) / 1000
 
-        if not val:
-            job['cpu_utilization'] = 0
-        else:
-            val = json.loads(val)
-            job['cpu_utilization'] = (ave_cpu - val['ave_cpu']) / UPDATE_DELTA
 
-        val = {'ave_cpu': ave_cpu, 'ave_gpu': ave_gpu}
-        redis_cli.set(key, json.dumps(val))
+        # val = {'ave_cpu': ave_cpu, 'ave_gpu': ave_gpu}
+        # redis_cli.set(key, json.dumps(val), ex= 3600 * 24)
     return jobs
 
 
@@ -203,13 +207,13 @@ def get_slurm_partition() -> Dict:
     for partition in parts:
         res[partition['name']] = {
             'nodes': partition['nodes'],
-            'total_gpu': partition['total_gpu'],
-            'total_cpu': partition['total_cpu'],
+            'total_gpu': partition['gpu_total'],
+            'total_cpu': partition['cpu_total'],
             'running_jobs': job_counts.get(partition['name'], 0),
             'state': partition['state'],
             'default': partition['default']
         }
-    return res
+    return example
 
 
 def get_slurm_user_utilization_by_time():
@@ -228,13 +232,17 @@ def do_upload_data(data: dict):
     for k in data:
         json_str = json.dumps(data[k])
         redis_cli.set(k, json_str, ex=3600 * 48)
-    for k in data:
-        print(k, json.loads(redis_cli.get(k)))
-        print('=' * 30)
+    # for k in data:
+        # print(k, json.loads(redis_cli.get(k)))
+        # print('=' * 30)
 
 
 def do_record_alert():
     pass
+
+
+def get_monthly_jobs():
+    """获取当月作业"""
 
 
 def get_cancel_job() -> List:
@@ -301,8 +309,6 @@ def solve_alert(alert_info):
         tmp.append(_alert.__dict__)
         today_alerts[_alert.alert_name] = tmp
     redis_cli.set(key, json.dumps(today_alerts), ex=3600 * 24)
-
-
 
 
 def do_update_canceled_job(job_id: List):
@@ -594,6 +600,14 @@ def test_redis():
         redis_cli.set(k, json.dumps(data[k]), ex=3600 * 72)
         # print(redis_cli.get(k))
 
+def check_redis():
+    keys = redis_cli.keys()
 
+
+    print(keys)
+    for key in keys:
+        print(key, redis_cli.get(key))
 # get_slurm_jobs()
 # test_redis()
+check_redis()
+

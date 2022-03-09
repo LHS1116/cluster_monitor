@@ -34,9 +34,14 @@ def get_jobs():
     part_dict = {}
     user_dict = {}
     for job in jobs:
-        state = job.get('state')
-        part = job.get('partition')
-        user = job.get('user')
+        job['job_id'] = job.get('job_id', job.get('JobID'))
+        state = job.get('state', job.get('State'))
+        part = job.get('partition', job.get('Partition'))
+        user = job.get('user', job.get('User'))
+        job['user'], job['state'], job['partition'] = user, state, part
+        job['start_time'] = job.get('start_time', job.get('Start'))
+        job['end_time'] = job.get('end_time', job.get('End'))
+
         state_count = state_dict.get(state, 0) + 1
         state_dict[state] = state_count
         part_count = part_dict.get(part, 0) + 1
@@ -91,9 +96,8 @@ def get_cluster_resource_info():
 
         'detail': {
             'gpu': {
-                'total': 100,
-                'alloc': 58,
-                'idle': 42
+                'using': 52,
+                'idle': 48
             },
             'user': {
                 'online': 10
@@ -109,11 +113,22 @@ def get_cluster_resource_info():
         },
         'gpu_total': 100,
         'cpu_total': 108,
-        'user_online': 7,
+        'user_online': 3,
         'partition_total': 3,
         'running_job': 108,
         'alert_count': 2
     }
+    now = datetime.datetime.now()
+    alert_key = f'alert_{now.strftime("%Y-%m-%d")}'
+    alerts = redis_cli.get(alert_key) or '[]'
+    current_user = redis_cli.get('current_user') or '[]'
+    alerts = json.loads(alerts)
+    current_user = json.loads(current_user)
+    jobs = json.loads(redis_cli.get('jobs') or '[]')
+
+    resources['running_job'] = len(jobs)
+    resources['user_online'] = len(current_user)
+    resources['alert_count'] = sum(map(lambda x: len(alerts[x]), alerts))
     return jsonify(get_response(resources, 200))
 
 
@@ -224,7 +239,6 @@ def get_user_resource_info():
             user_info['cpu_used'] = user_resources_info.get('cpu_used', 0)
             user_info['gpu_used'] = user_resources_info.get('gpu_used', 0)
             user_info['total_job'] = sum(map(lambda x: user_info['state'].get(x, 0), user_info['state']))
-
             user_info['running_job'] = user_info.get('state').get('running', [])
             user_info['failed_job'] = user_info.get('state').get('failed', 0)
             user_info['completed_job'] = user_info.get('state').get('completed', 0)
@@ -260,6 +274,52 @@ def get_user_resource_info():
     }
     return jsonify(get_response(res, 200))
 
+@resource_view.route('/user/rank')
+def get_user_utilization_rank_info():
+    """获取用户资源使用信息"""
+    # today_jobs = get_today_jobs()
+    # monthly_jobs = get_monthly_jobs()
+    # jobs = get_monthly_jobs()
+    # user_resources = get_user_resource()
+    # res = {}
+    # for job in jobs:
+    #     user = job.user
+    #     user_info = res.get(user, {})
+    #     # 记录作业状态数量
+    #     user_states = user_info.get('state', {})
+    #     stat = job.state
+    #     if stat != 'running':
+    #         count = user_states.get(stat, 0) + 1
+    #         user_states[stat] = count
+    #     else:
+    #         running_jobs = user_states.get(stat, [])
+    #         running_jobs.append(job.job_id)
+    #         user_states[stat] = running_jobs
+    #     user_info['state'] = user_info
+    #     res[user] = user_info
+    #
+    # for user in user_resources:
+    #     user_resources_info = user_resources[user]
+    #     user_info = res.get(user)
+    #     if user_info:
+    #         user_info['cpu_alloc'] = user_resources_info.get('cpu_alloc', 0)
+    #         user_info['gpu_alloc'] = user_resources_info.get('gpu_alloc', 0)
+    #         user_info['cpu_used'] = user_resources_info.get('cpu_used', 0)
+    #         user_info['gpu_used'] = user_resources_info.get('gpu_used', 0)
+    #         user_info['total_job'] = sum(map(lambda x: user_info['state'].get(x, 0), user_info['state']))
+    #         user_info['running_job'] = user_info.get('state').get('running', [])
+    #         user_info['failed_job'] = user_info.get('state').get('failed', 0)
+    #         user_info['completed_job'] = user_info.get('state').get('completed', 0)
+    #         user_info['pending_job'] = user_info.get('state').get('pending', 0)
+    #     res[user] = user_info
+
+    res = {
+        f'root_{i}': {
+            'daily_gpu_utilization': round(random.random(), 3),
+            'monthly_gpu_utilization': round(random.random(), 3)
+        } for i in range(15)
+    }
+    return jsonify(get_response(res, 200))
 
 
 
@@ -290,7 +350,7 @@ def check_cancel_job():
     """查询需要关闭的作业"""
     try:
         jobs = get_cancel_job()
-        return jobs
+        return jsonify(get_response(jobs, 200))
     except Exception as e:
         print(e)
         traceback.print_tb(sys.exc_info()[2])
@@ -321,8 +381,18 @@ def update_canceled_job():
 
 @alert_view.route('/alerts')
 def get_alerts():
-    """获取历史告警记录"""
-    pass
+    """获取今日告警记录"""
+    now = datetime.datetime.now()
+    alert_key = f'alert_{now.strftime("%Y-%m-%d")}'
+    alerts = redis_cli.get(alert_key)
+    if alerts:
+        alerts = json.loads(alerts)
+    else:
+        alerts = {}
+    assert isinstance(alerts, dict)
+    alerts['alert_count'] = sum(map(lambda x: len(alerts[x]), alerts))
+
+    return jsonify(get_response(alerts, 200))
 
 
 @alert_view.route('/alert/<string:user_name>')

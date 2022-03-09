@@ -24,6 +24,3 @@ def test():
             break
 columns = ['User', 'JobID', 'Partition', 'JobName', 'State', 'AllocTRES', 'AllocGRES', 'AllocCPUS', 'QOS', 'AveCPU','ReqCPUS', 'CPUTime', 'TotalCPU', 'UserCPU', 'ReqTRES', 'Submit', 'Start', 'End']
 
-fmt = ','.join(columns)
-command = f'sacct -a --format="{fmt}" -j 86'  # 根据需要增加
-print(command)
